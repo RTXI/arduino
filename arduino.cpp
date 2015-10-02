@@ -22,7 +22,7 @@ Changelog:
 =========================================================================
 */
 
-#include <Arduino.h>
+#include <arduino.h>
 
 extern "C" Plugin::Object *createRTXIPlugin(void) 
 {

@@ -1,9 +1,9 @@
 
-PLUGIN_NAME = Arduino
+PLUGIN_NAME = arduino
 
-HEADERS =  arduino_serial.h Arduino.h 
+HEADERS =  arduino_serial.h arduino.h 
 
-SOURCES = arduino_serial.cpp Arduino.cpp 
+SOURCES = arduino_serial.cpp arduino.cpp 
 
 LIBS = 
 
