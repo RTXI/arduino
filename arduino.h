@@ -36,15 +36,14 @@ Changelog:
 -v1.0-Initial version of the module.
  */
 
+#include <QtGui>
 #include <default_gui_model.h>
-#include <qstring.h>
 #include <ostream>
 #include <fstream>
 #include <stdio.h> 
 #include <stdlib.h>
 #include <string.h> 
-#include <qmessagebox.h>
-#include <qfiledialog.h>
+#include <dirent.h>
 #include "arduino_serial.h"
 
 #define buf_max 256
@@ -64,18 +63,18 @@ class Arduino : public DefaultGUIModel
 
 	private:
 		char buf[buf_max];
-		int rc,n;
+		char eolchar;
+		int n;
 		int fd;
 		int baudrate;
-		char quiet;
-		char eolchar;
 		int timeout;
+		double fs;
 		int in0, in1, in2, in3, in4, in5;
-		int Arduino_time;
-		double i;
-    QComboBox *waveShape;
+    QComboBox *portList;
+    QStatusBar *statusBar;
+    QTimer *timer;
 
 		private slots:
 		void connectArduino();
-
+		void acquireData();
 };

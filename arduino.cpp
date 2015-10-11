@@ -38,7 +38,6 @@ Changelog:
  */
 
 #include <arduino.h>
-#include <dirent.h>
 
 std::list<std::string> getComList();
 
@@ -50,12 +49,9 @@ extern "C" Plugin::Object *createRTXIPlugin(void)
 static DefaultGUIModel::variable_t vars[] = 
 {
 	{"Baud Rate", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::INTEGER,},
-	{"ArduinoSerial0","Int", DefaultGUIModel::OUTPUT,},
-	{"ArduinoSerial1","Int", DefaultGUIModel::OUTPUT,},
-	{"ArduinoSerial2","Int", DefaultGUIModel::OUTPUT,},
-	{"ArduinoSerial3","Int", DefaultGUIModel::OUTPUT,},
-	{"ArduinoSerial4","Int", DefaultGUIModel::OUTPUT,},
-	{"ArduinoSerial5","Int", DefaultGUIModel::OUTPUT,},
+	{"Timeout", "Connection Timeout", DefaultGUIModel::PARAMETER | DefaultGUIModel::INTEGER,},
+	{"Sampling Rate", "Hz", DefaultGUIModel::PARAMETER, },
+	{"Data","Int", DefaultGUIModel::OUTPUT,},
 };
 
 static size_t num_vars = sizeof(vars)/sizeof(DefaultGUIModel::variable_t);
@@ -63,80 +59,42 @@ static size_t num_vars = sizeof(vars)/sizeof(DefaultGUIModel::variable_t);
 Arduino::Arduino(void) : DefaultGUIModel("Arduino",::vars,::num_vars)
 {
 	createGUI(vars, num_vars);
-	customizeGUI();
 	update(INIT);
+	customizeGUI();
 	refresh();
 	resizeMe();
+
+	timer = new QTimer();
+	timer->setTimerType(Qt::CoarseTimer);
+	QObject::connect(timer, SIGNAL(timeout()), this, SLOT(acquireData()));
 }
 
-Arduino::~Arduino(void) {}
+Arduino::~Arduino(void) { }
 
+/*
+ * No data acquisition takes place in execute due to the 
+ * non-RT nature of serial port connections
+ */
 void Arduino::execute(void)
+{
+}
+
+/*
+ * Skeleton function for basic acquisition of data from connected Arduino
+ * Users should customize parsing of incoming data based upon their Arduino's
+ * specific configuration and serial settings.
+ */
+void Arduino::acquireData(void)
 {
 	if(fd != -1)
 	{
 		serialport_read_until(fd, buf, ',', buf_max, timeout);
-		Arduino_time = atoi(buf);
-		if( !quiet ) 
-		{	
-			printf("time:");
-			printf("%s\t", buf);
-		}
-
-		serialport_read_until(fd, buf, ',', buf_max, timeout);
-		in0=atoi(buf);
-		if( !quiet ) 
-		{	
-			printf("X:");
-			printf("%s\t", buf);
-		}
-
-		serialport_read_until(fd, buf, ',', buf_max, timeout);
-		in1=atoi(buf);
-		if( !quiet ) 
-		{	
-			printf("Y:");
-			printf("%s\t", buf);
-		}
-
-		serialport_read_until(fd, buf, ',', buf_max, timeout);
-		in2=atoi(buf);
-		if( !quiet ) 
-		{	
-			printf("Z:");
-			printf("%s\n", buf);
-		}
-
-		serialport_read_until(fd, buf, ',', buf_max, timeout);
-		in3=atoi(buf);
-		if( !quiet ) 
-		{	
-			printf("in3:");
-			printf("%s\n", buf);
-		}
-
-		serialport_read_until(fd, buf, ',', buf_max, timeout);
-		in4=atoi(buf);
-		if( !quiet ) 
-		{	
-			printf("in4:");
-			printf("%s\n", buf);
-		}
 
 		serialport_read_until(fd, buf, ';', buf_max, timeout);
-		in5=atoi(buf);
-		if( !quiet ) 
-		{	
-			printf("in5:");
-			printf("%s\n", buf);
-		}
+
 		serialport_read_until(fd, buf, '\n', buf_max, timeout);
-		output(0)=((double)in0-128.0)/256.0;
-		output(1)=((double)in1-128.0)/256.0;
-		output(2)=((double)in2-128.0)/256.0;
-		output(3)=((double)in3-128.0)/256.0;
-		output(4)=((double)in4-128.0)/256.0;
-		output(5)=((double)in5-128.0)/256.0;
+
+		output(0) = ((double)in0-128.0)/256.0;
 	}
 }
 
@@ -145,23 +103,27 @@ void Arduino::update(DefaultGUIModel::update_flags_t flag)
 	switch(flag) {
 		case INIT:
 			fd = -1;
+			fs = 10;
 			baudrate = 9600;
-			quiet = 1;
-			eolchar = '\n';
 			timeout = 5000;
-			serialport_flush(fd);
+			eolchar = '\n';
 			memset(buf,0,buf_max); 
+			setParameter("Baud Rate", baudrate);
+			setParameter("Timeout", timeout);
+			setParameter("Sampling Rate", fs);
 			break;
 
 		case MODIFY:
-			fd = serialport_init("/dev/ttyACM0", baudrate);
-			if(fd == -1)
-				printf("couldn't open port\n");
-			if(!quiet)
-				printf("opened port /dev/ttyUSB0\n");
+			baudrate = getParameter("Baud Rate").toInt();
+			timeout = getParameter("Timeout").toInt();
+			fs = getParameter("Sampling Rate").toDouble();
 			break;
 
 		case PAUSE:
+			break;
+
+		case UNPAUSE:
+			timer->start(1.0/fs);
 			break;
 
 		default:
@@ -172,16 +134,20 @@ void Arduino::update(DefaultGUIModel::update_flags_t flag)
 void Arduino::customizeGUI(void)
 {
 	QGridLayout *customlayout = DefaultGUIModel::getLayout();
-	
+
 	QGroupBox *modeBox = new QGroupBox("Port:");
 	QVBoxLayout *modeBoxLayout = new QVBoxLayout(modeBox);
-	waveShape = new QComboBox;
-	modeBoxLayout->addWidget(waveShape);
+	portList = new QComboBox;
+	modeBoxLayout->addWidget(portList);
 
 	// Retrive list of available serial ports
 	std::list<std::string> listOfPorts = getComList();
+	size_t i = 0;
 	for(std::list<std::string>::iterator it = listOfPorts.begin(); it != listOfPorts.end(); it++)
-		waveShape->insertItem(i, QString::fromUtf8(std::string(*it).c_str()));
+	{
+		portList->insertItem(i, QString::fromUtf8(std::string(*it).c_str()));
+		i++;
+	}
 
 	// Connect button
 	QPushButton *connectButton = new QPushButton("Connect");
@@ -189,19 +155,37 @@ void Arduino::customizeGUI(void)
 	QObject::connect(connectButton, SIGNAL(clicked()), this, SLOT(connectArduino()));
 	modeBoxLayout->addWidget(connectButton);
 
+	// Status bar
+	QGroupBox *status_group = new QGroupBox;
+	QHBoxLayout *status_layout = new QHBoxLayout;
+	status_group->setLayout(status_layout);
+	statusBar = new QStatusBar();
+	statusBar->setSizeGripEnabled(false);
+	statusBar->showMessage(tr("Not connected to device."));
+	status_layout->addWidget(statusBar, 2, 0);
+
 	customlayout->addWidget(modeBox, 0,0);
+	customlayout->addWidget(status_group, 2, 0);
 	setLayout(customlayout);
 }
 
 void Arduino::connectArduino()
 {
-	printf("Connect...\n");
+	if(fd = serialport_init(portList->currentText().toStdString().c_str(), baudrate))
+	{
+		statusBar->showMessage(tr("Connected."));
+		serialport_flush(fd);
+	}
+	else
+	{
+		statusBar->showMessage(tr("Connection failed. Check port configuration."));
+	}
 }
 
 std::list<std::string> getComList() {
 	int n;
 	struct dirent **namelist;
-	const char* sysdir = "/sys/class/tty/";
+	const char* sysdir = "/dev/";
 	std::string devicedir = sysdir;
 	std::list<std::string> comList;
 
@@ -211,9 +195,8 @@ std::list<std::string> getComList() {
 		perror("scandir");
 	else {
 		while (n--) {
-			if (strcmp(namelist[n]->d_name,"..") && strcmp(namelist[n]->d_name,".")) {
+			if (strstr(namelist[n]->d_name,"tty"))
 				comList.push_back(devicedir + namelist[n]->d_name);
-			}
 		}
 		free(namelist);
 	}
