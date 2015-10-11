@@ -51,18 +51,18 @@ Changelog:
 
 class Arduino : public DefaultGUIModel
 {
+	Q_OBJECT
 
 	public:
 		Arduino(void);
 		virtual ~Arduino(void);
 		virtual void execute(void);
+		void customizeGUI(void);
 
 	protected:
 		virtual void update(DefaultGUIModel::update_flags_t);
 
 	private:
-
-		//char const serialport[buf_max];
 		char buf[buf_max];
 		int rc,n;
 		int fd;
@@ -72,6 +72,10 @@ class Arduino : public DefaultGUIModel
 		int timeout;
 		int in0, in1, in2, in3, in4, in5;
 		int Arduino_time;
-		double Time;
 		double i;
+    QComboBox *waveShape;
+
+		private slots:
+		void connectArduino();
+
 };
