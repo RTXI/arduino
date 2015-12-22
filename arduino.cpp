@@ -62,7 +62,7 @@ Arduino::Arduino(void) : DefaultGUIModel("Arduino",::vars,::num_vars)
 	update(INIT);
 	customizeGUI();
 	refresh();
-	resizeMe();
+	QTimer::singleShot(0, this, SLOT(resizeMe()));
 
 	timer = new QTimer();
 	timer->setTimerType(Qt::CoarseTimer);
