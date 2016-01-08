@@ -6,7 +6,7 @@
 ![Arduino GUI](arduino.png)
 
 <!-- start -->
-Acquire data in RTXI from an Arduino.
+Acquire data in RTXI from an Arduino. (Non-RT)
 <!-- end -->
 
 ####Input Channels
