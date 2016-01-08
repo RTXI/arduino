@@ -2,11 +2,11 @@
 PLUGIN_NAME = arduino
 
 HEADERS =  arduino_serial.h \
-					 arduino.h 
+           arduino.h 
 
 SOURCES = arduino_serial.cpp \
-					arduino.cpp \
-					moc_arduino.cpp
+          arduino.cpp \
+          moc_arduino.cpp
 
 LIBS = 
 
