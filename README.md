@@ -13,12 +13,12 @@ Acquire data in RTXI from an Arduino. (Non-RT)
 None  
 
 ####Output Channels
-1. output(0) - Vm : membrane voltage (V)  
+1. Data - Int
 
 ####Parameters
-1. Band Rate - voltage  
-2. Timeout - connection timeout  
-3. Data - (Int)  
+1. Baud Rate (bps)
+2. Timeout - (Int) connection timeout  
+3. Sampling Rate (Hz)
 
 ####States
 None  
