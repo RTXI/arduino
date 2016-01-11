@@ -1,7 +1,7 @@
 ### Arduino
 
-**Requirements:** Arduino
-**Limitations:** Non-RT
+**Requirements:** Arduino  
+**Limitations:** Non-RT  
 
 ![Arduino GUI](arduino.png)
 
