@@ -9,16 +9,16 @@
 Acquire data in RTXI from an Arduino. (Non-RT)
 <!--end-->
 
-####Input Channels
+#### Input Channels
 None  
 
-####Output Channels
+#### Output Channels
 1. Data - Int
 
-####Parameters
+#### Parameters
 1. Baud Rate (bps)
 2. Timeout - (Int) connection timeout  
 3. Sampling Rate (Hz)
 
-####States
+#### States
 None  
